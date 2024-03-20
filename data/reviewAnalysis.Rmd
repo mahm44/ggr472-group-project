@@ -1,0 +1,53 @@
+---
+title: "reviewAnalysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(openintro) ## Load the package
+library(tidyverse)
+library(dplyr)
+library(broom)
+library(ggplot2)
+
+restaurants <- read.csv("Restaurants.csv", header = T)
+
+```
+
+# append restaurant names to review file
+```{r}
+
+
+
+```
+
+
+# split each review into food keywords, service keywords and atmosphere keywords
+```{r}
+
+
+
+```
+
+# count positive and negative keywords and assign a label for each category
+```{r}
+
+
+```
+
+
+# count num of labels for each restaurant category
+```{r}
+
+
+```
+
+
+# assign positive or negative label based on count for each category --> append output into original restaurants file 
+```{r}
+
+
+```
+
+# save file 
