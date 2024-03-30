@@ -10,44 +10,466 @@ library(tidyverse)
 library(dplyr)
 library(broom)
 library(ggplot2)
+library(glue)
+library(stringr)
+
 
 restaurants <- read.csv("Restaurants.csv", header = T)
+reviews <- read.csv("reviews_1.csv", header = T)
+
+restaurants <- restaurants %>% filter(!(Name == ""))
 
 ```
 
 # append restaurant names to review file
 ```{r}
-
-
+# names <- c()
+# 
+# for (i in 1:nrow(restaurants)){
+#   for (j in 1:50){
+#     names <- c(names, restaurants$Name[i])
+#   }
+# }
+# 
+# 
+# reviews$RestaurantName = names
 
 ```
 
 
 # split each review into food keywords, service keywords and atmosphere keywords
 ```{r}
+food <- c("food", "menu", "delicious", "flavour", "spicy", "meal",
+          "sweet", "fresh", "tasty", "yummy", "portion", "vomited",
+          "authentic", "filling", "taste", "yum", "seasoning", "meat",
+          "veg", "flavor")
+service <- c("service", "staff", "wait", "slow", "quick", "kind",
+             "server", "helpful", "waiter", "waitress", "cashier",
+             "greet", "greeted",  "welcome", "welcoming", "customer",
+             "employees", "owners",
+             "nice")
+atmosph <- c("ambiance", "location", "experience", "small", "spacious",
+             "seat", "seating", "vibes", "atmosphere")
+price <- c("expensive", "price", "cheap", "money", "overpriced", "ripoff",
+           "rip-off", "pricing", "moderate", "free", "complimentary",
+           "complimantry", "value", " price" )
 
+reviews$food = ""
+reviews$service = ""
+reviews$atmosph = ""
+reviews$price = ""
 
+for (i in 1:nrow(reviews)){
+  text <- reviews$caption[i]
+  text <- unlist(strsplit(text, "(?<=[[:punct:]])\\s(?=[A-Z])", perl=T))
+  f <- c()
+  s <- c()
+  a <- c()
+  p <- c()
+  
+  for (j in 1:length(text)){
+    reviewText <- gsub("\\.", " ", text[j])
+    reviewText <- gsub("\\!", " ", text[j])
+    reviewText <- gsub("  ", " ", text[j])
+    reviewText <- c(strsplit(reviewText, " "))
+    reviewText <- unlist(reviewText)
+    
+    if (length(Reduce(intersect, list(food, reviewText))) > 0){
+      f <- c(f, text[j])
+    }
+    if (length(Reduce(intersect, list(service, reviewText))) > 0){
+      s <- c(s, text[j])
+    }
+    if (length(Reduce(intersect, list(atmosph, reviewText))) > 0){
+      a <- c(a, text[j])
+    }
+    if (length(Reduce(intersect, list(price, reviewText))) > 0){
+      p <- c(p, text[j])
+    }
+  }
+  reviews$food[i] = ifelse(is.null(f), " ", f)
+  reviews$service[i] = ifelse(is.null(s), " ", s)
+  reviews$atmosph[i] = ifelse(is.null(a), " ", a)
+  reviews$price[i] = ifelse(is.null(p), " ", p)
+  
+}
 
 ```
 
 # count positive and negative keywords and assign a label for each category
 ```{r}
+# reviews$foodPos = ""
+# reviews$servicePos = ""
+# reviews$atmosphPos = ""
+# reviews$priceLevel = ""
 
+# FOOD 
+
+posFood <- c("delicious", "flavor", "flavour", "yum", "yummy", "tasty", 
+             "good", "seasoned", "warm", "portion", "big", "sweet",
+             "appetizing", "excellent", "outstanding", "cooked", "well",
+             "rich", "flavourful", "great", "aroma", "cheesy", "creamy", 
+             "soft", "perfect", "cooked", "crispy", "juicy", "spicy", 
+             "fragrant", "hot", "fresh", "excellent", "good", "amazing", 
+             "awesome", "best", "flavorful")
+negFood <- c("too", "not", "disgusting", "poor", "gross", "smelly",
+             "nasty", "overcooked", "raw", "hard", "mushy", "undercooked",
+             "squishy", "chewy", "watery", "dry", "bland", "sour",
+             "sugary", "rubbery", "salty", "soggy", "cold", "old", "bad", 
+             "dissapointing", "underwhelming", "low", "wrong", "worst", 
+             "terrible", "worst", "stale")
+
+
+sentiments <- c()
+for (i in 1:nrow(reviews)){
+  
+  if (reviews$food[i] != ""){
+    text <- trimws(reviews$food[i])
+    text <- gsub("\\$", " ", text)
+    text <- gsub("\\.", " ", text)
+    text <- gsub("\\!", " ", text)
+    reviewText <- gsub("  ", " ", text)
+  
+    tokens <- c(reviewText)
+    tokens <- c(strsplit(as.character(tokens), " "))
+    
+    tokens <- unlist(tokens)
+  
+    positive_num <- 0
+    negative_num <- 0
+  
+    positive_num <- length(Reduce(intersect, list(posFood, tokens)))
+    negative_num <- length(Reduce(intersect, list(negFood, tokens)))
+    
+    sentiment <- ""
+  
+  
+    if (positive_num < negative_num){
+      sentiment <- "negative"
+    }
+    else if (positive_num == negative_num){
+      sentiment <- "neutral"
+    }
+    else{
+      sentiment <- "positive"
+    }
+  
+    sentiments <- c(sentiments, sentiment)
+  }
+}
+reviews$foodPos = sentiments
+```
+
+``` {r}
+# SERVICE 
+posServ <- c("kind", "welcome", "welcoming", "quick", "fast", "speedy", 
+             "helpful", "warm", "greet", "greeted", "cordial", "fast", 
+             "good", "amazing", "friendly", "nice", "service",
+             "excellent", "by", "lovely", "hospitable", "great", "back", 
+             "long", "efficient", "efficiently")
+negServ <- c("slow", "rude", "could", "better", "service", "zero", "cold",
+             "running", "one", "complain", "complained", "horrible", 
+             "never", "coming", "back", "remind", "poorly", "ignored", 
+             "impatient", "long", "too", "bad", "wait", "forget",
+             "forgot", "terrible")
+
+sentiments <- c()
+for (i in 1:nrow(reviews)){
+  
+  if (reviews$service[i] != ""){
+    text <- trimws(reviews$service[i])
+    text <- gsub("\\$", " ", text)
+    text <- gsub("\\.", " ", text)
+    text <- gsub("\\!", " ", text)
+    reviewText <- gsub("  ", " ", text)
+  
+    tokens <- c(reviewText)
+    tokens <- c(strsplit(as.character(tokens), " "))
+    
+    tokens <- unlist(tokens)
+  
+    positive_num <- 0
+    negative_num <- 0
+  
+    positive_num <- length(Reduce(intersect, list(posServ, tokens)))
+    negative_num <- length(Reduce(intersect, list(negServ, tokens)))
+    
+    sentiment <- ""
+  
+  
+    if (positive_num < negative_num){
+      sentiment <- "negative"
+    }
+    else if (positive_num == negative_num){
+      sentiment <- "neutral"
+    }
+    else{
+      sentiment <- "positive"
+    }
+  
+    sentiments <- c(sentiments, sentiment)
+  }
+}
+reviews$servPos = sentiments
+
+
+```
+
+
+```{r}
+# ATMOSPHERE
+
+posAtmosph <- c("nice", "cozy", "comfortable", "ambiance", "ambience", 
+                "great", "vibes", "vibe", "authentic", "atmosphere",
+                "like", "enjoy", "experience", "location", "charming", 
+                "clean", "welcoming", "spacious", "design", "modern", 
+                "new", "newer")
+negAtmosph <- c("small", "location", "dirty", "smelly", "ok", "old", 
+                "rundown", "unpleasant", "experience")
+
+sentiments <- c()
+for (i in 1:nrow(reviews)){
+  
+  if (reviews$atmosph[i] != ""){
+    text <- trimws(reviews$atmosph[i])
+    text <- gsub("\\$", " ", text)
+    text <- gsub("\\.", " ", text)
+    text <- gsub("\\!", " ", text)
+    reviewText <- gsub("  ", " ", text)
+  
+    tokens <- c(reviewText)
+    tokens <- c(strsplit(as.character(tokens), " "))
+    
+    tokens <- unlist(tokens)
+  
+    positive_num <- 0
+    negative_num <- 0
+  
+    positive_num <- length(Reduce(intersect, list(posAtmosph, tokens)))
+    negative_num <- length(Reduce(intersect, list(negAtmosph, tokens)))
+    
+    sentiment <- ""
+  
+  
+    if (positive_num < negative_num){
+      sentiment <- "negative"
+    }
+    else if (positive_num == negative_num){
+      sentiment <- "neutral"
+    }
+    else{
+      sentiment <- "positive"
+    }
+  
+    sentiments <- c(sentiments, sentiment)
+  }
+}
+reviews$atmosphPos = sentiments
+
+```
+
+
+```{r}
+# PRICE 
+cheap <- c("free", "complimentary","complimantry", "cheap", "good", 
+           "filling", "perfect", "generous", "extra")
+med <- c("reasonable", "moderate", "ok", "okay", "value", "right", 
+         "just", "affordable", "worth", "great")
+expensive <- c("overpriced", "expensive", "ripoff", "gouging", "hang", 
+               "waste")
+
+ratings <- c()
+for (i in 1:nrow(reviews)){
+  
+  if (reviews$atmosph[i] != ""){
+    text <- trimws(reviews$atmosph[i])
+    text <- gsub("\\$", " ", text)
+    text <- gsub("\\.", " ", text)
+    text <- gsub("\\!", " ", text)
+    reviewText <- gsub("  ", " ", text)
+  
+    tokens <- c(reviewText)
+    tokens <- c(strsplit(as.character(tokens), " "))
+    
+    tokens <- unlist(tokens)
+  
+    rank1 <- 0
+    rank2 <- 0
+    rank3 <- 0
+  
+    rank1 <- length(Reduce(intersect, list(cheap, tokens)))
+    rank2 <- length(Reduce(intersect, list(med, tokens)))
+    rank3 <- length(Reduce(intersect, list(expensive, tokens)))
+    
+    rating <- 0
+  
+  
+    if (rank1 > rank2 & rank1 > rank3){
+      rating <- 1
+    }
+    else if (rank2 > rank1 & rank2 > rank3){
+      rating <- 2
+    }
+    else if (rank3 > rank1 & rank3 > rank2){
+      rating <- 3
+  }
+  
+    ratings <- c(ratings, rating)
+  }
+}
+reviews$priceRank = ratings
 
 ```
 
 
 # count num of labels for each restaurant category
 ```{r}
-
+#FOOD
+labels <- c()
+p <- 0 
+n <- 0 
+for (i in 1:nrow(reviews)){
+  if (i < nrow(reviews) &&
+      reviews$restaurant[i] == reviews$restaurant[i + 1]){
+    if (reviews$foodPos[i] == "positive"){
+      p = p + 1
+    }
+    else if (reviews$foodPos[i] == "negative"){
+      n = n + 1
+    }
+  }
+  else{
+    if (p > n){
+      label <-  "Positive"
+    }
+    else if (n > p){
+      label <- "Negative"
+    }
+    else{
+      label = "Neutral"
+    }
+    labels <- c(labels, label)
+    p <- 0 
+    n <- 0 
+  }
+}
+restaurants$foodRating <- labels
 
 ```
 
 
-# assign positive or negative label based on count for each category --> append output into original restaurants file 
 ```{r}
+#SERVICE
+labels <- c()
+p <- 0 
+n <- 0 
+for (i in 1:nrow(reviews)){
+  if (i < nrow(reviews) &&
+      reviews$restaurant[i] == reviews$restaurant[i + 1]){
+    if (reviews$servPos[i] == "positive"){
+      p = p + 1
+    }
+    else if (reviews$servPos[i] == "negative"){
+      n = n + 1
+    }
+  }
+  else{
+    if (p > n){
+      label <-  "Positive"
+    }
+    else if (n > p){
+      label <- "Negative"
+    }
+    else{
+      label = "Neutral"
+    }
+    labels <- c(labels, label)
+    p <- 0 
+    n <- 0 
+  }
+}
+restaurants$serviceRating <- labels
+
+```
+
+```{r}
+# ATMOSPHERE
+labels <- c()
+p <- 0 
+n <- 0 
+for (i in 1:nrow(reviews)){
+  if (i < nrow(reviews) &&
+      reviews$restaurant[i] == reviews$restaurant[i + 1]){
+    if (reviews$atmosphPos[i] == "positive"){
+      p = p + 1
+    }
+    else if (reviews$atmosphPos[i] == "negative"){
+      n = n + 1
+    }
+  }
+  else{
+    if (p > n){
+      label <-  "Positive"
+    }
+    else if (n > p){
+      label <- "Negative"
+    }
+    else{
+      label = "Neutral"
+    }
+    labels <- c(labels, label)
+    p <- 0 
+    n <- 0 
+  }
+}
+restaurants$atmosphereRating <- labels
+
+```
+
+```{r}
+# PRICE
+labels <- c()
+one <- 0 
+two <- 0 
+three <- 0
+for (i in 1:nrow(reviews)){
+  if (i < nrow(reviews) &&
+      reviews$restaurant[i] == reviews$restaurant[i + 1]){
+    if (reviews$priceRank[i] == 1){
+      one = one + 1
+    }
+    else if (reviews$priceRank[i] == 2){
+      two = two + 1
+    }
+    else if (reviews$priceRank[i] == 3){
+      three = three + 1
+    }
+  }
+  else{
+    label = mean(one + two + three)
+    labels <- c(labels, round(label))
+    one <- 0
+    two <- 0
+    three <- 0
+  }
+}
+restaurants$priceRating <- labels
+
+```
+
+
+# final edit
+```{r}
+restaurants <- restaurants %>% 
+  mutate(priceRating = case_when(priceRating > 3 ~ 3, TRUE ~ priceRating))
 
 
 ```
+
 
 # save file 
+```{r}
+write.csv(restaurants, file = "restaurants_final.csv", row.names = TRUE)
+
+```
+
