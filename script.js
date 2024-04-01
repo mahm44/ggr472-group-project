@@ -8,6 +8,7 @@ const map = new mapboxgl.Map({
     zoom: 12 // starting zoom level
 });
 
+
 // fetch map data from website 
 let restaurantsgeojson;
 
@@ -31,4 +32,20 @@ map.on('load', () => {
         'type': 'circle', 
         'source': 'restaurant-data'
     });
+})
+
+console.log(map);
+
+// checkbox filter checks 
+// get the current status of all the checkboxes 
+const checks = document.getElementById('cuisine-check');
+
+checks.addEventListener('change', function () {
+    // check status of what changed; if currently visible, make not visible and vice versa 
+
+    if (checks.ariaChecked){
+        // i guess????????
+        // change to array to check all values at once???? idk what checks is taking in rn 
+        map.setFilter('data-pts', ['==', ['get', 'Cusisine'], checks.ariaValueText])
+    }
 })
