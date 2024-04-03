@@ -8,6 +8,12 @@
     <!-- mapbox API -->
     <script src='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css' rel='stylesheet' />
+    <!-- mapbox geocoder plugin -->
+    <script
+        src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.2/mapbox-gl-geocoder.min.js"></script>
+    <link rel="stylesheet"
+        href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.2/mapbox-gl-geocoder.css"
+        type="text/css">
     <!-- CSS -->
     <link rel="stylesheet" href="style.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" 
@@ -18,29 +24,112 @@
 </head>
 <body>
     
+    <!--Creating a navigation bar using Bootstrap code-->
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">Toronto Culinary Tourism Map</a>
+            <!--Setting a navbar toggler for smaller screens-->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div  class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <!--Links in the navigation bar-->
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="about.html">About Us</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="resources.html">Additional Resources</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
     <!-- MAP CONTAINER -->
-    <div id='map' class='map'></div>
-    
-     
+    <div id='map' class='map-container'></div>
 
-    
-    <label class="list-group-item" id="cuisine-check">
-        <input class="form-check-input me-1" type="checkbox" value="" checked>
-        Cuisine1
-    </label>
-
-    
-    <script src="script.js"></script>
-
-    <!-- LEGEND -->
-    <div id='expense-legend' class='legend'>
-        <h4>Expensiveness</h4>
-        <div><span style='background-color: #800026'></span>1</div>
-        <div><span style='background-color: #bd0026'></span>1</div>
-        <div><span style='background-color: #e31a1c'></span>2</div>
-        <div><span style='background-color: #fc4e2a'></span>3</div>
-        <div><span style='background-color: #fd8d3c'></span>4</div>
+    <!-- default filter mode: by cuisine, popups show sentiments -->
+    <div class="map-overlay-1">
+        <h5> Cuisine Filters </h5>
+        <label class="list-group-item" id="south-asian">
+            <input class="form-check-input me-1" type="checkbox" value="" checked>
+            South Asian
+        </label>
+        <label class="list-group-item" id="east-asian">
+            <input class="form-check-input me-1" type="checkbox" value="" checked>
+            East Asian 
+        </label>
+        <label class="list-group-item" id="mid-east">
+            <input class="form-check-input me-1" type="checkbox" value="" checked>
+            Middle Eastern
+        </label>
+        <label class="list-group-item" id="carribean">
+            <input class="form-check-input me-1" type="checkbox" value="" checked>
+            Caribbean
+        </label>
+        <label class="list-group-item" id="southeast-asian">
+            <input class="form-check-input me-1" type="checkbox" value="" checked>
+            Southeast Asian 
+        </label>
+        <label class="list-group-item" id="european">
+            <input class="form-check-input me-1" type="checkbox" value="" checked>
+            European
+        </label>
+        <label class="list-group-item" id="central-american">
+            <input class="form-check-input me-1" type="checkbox" value="" checked>
+            Central American
+        </label>
+        <label class="list-group-item" id="religious">
+            <input class="form-check-input me-1" type="checkbox" value="" checked>
+            Religious
+        </label>
     </div>
-    
+
+    <div class = "btn-container">
+        <button type = "button" id = "btn"> Change Filter Mode </button>
+        <!-- var. text to display current filter mode???? -->
+    </div>
+
+    <div class = "map-overlay-2">
+        <h5> Sentiment Filters </h5>
+        <!-- sentiment filters -->
+        <label class="list-group-item" id="pos">
+            <input class="form-check-input me-2" type="checkbox" value="" unchecked>
+            Positive
+        </label> 
+        <label class="list-group-item" id="neg">
+            <input class="form-check-input me-2" type="checkbox" value="" unchecked>
+            Negative
+        </label> 
+        <label class="list-group-item" id="neu">
+            <input class="form-check-input me-2" type="checkbox" value="" unchecked>
+            Neutral
+        </label> 
+    </div>
+
+        <!-- LEGENDS -->
+
+        <!-- expense legend will be toggled on in sentiment filter mode  
+            need to fix so expenseiveness doesn't initally load -->
+        <div id='expense-legend' class='prices-legend'>
+            <h4>Expensiveness</h4>
+            <!--
+            <div><span style='background-color: #800026'></span>0</div>
+            <div><span style='background-color: #bd0026'></span>1</div>
+            <div><span style='background-color: #e31a1c'></span>2</div>
+            <div><span style='background-color: #fc4e2a'></span>3</div>
+            <div><span style='background-color: #fd8d3c'></span>4</div>
+            -->
+        </div>
+
+        <div id = 'cuisine-legend' class = 'legend'>
+            <h4> Cuisines </h4>
+        </div>
+
+    <script src="script.js"></script>
 </body>
 </html>

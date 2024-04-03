@@ -1,7 +1,87 @@
-.map {
+.map-container {
     position: absolute;
-    top: 10%;
-    bottom: 10%;
-    right: 0%;
+    top: 56px;
+    bottom: 0;
+    right: 0;
     width: 100%;
+    z-index: -1;
+}
+
+.map-overlay-1 {
+    position: relative;
+    font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    background: #fff;
+    top: 0;
+    left: 0;
+    width: 300px;
+    margin: 10px 10px 0 10px;
+    padding: 10px;
+    overflow: visible;
+    border-radius:8px;
+}
+
+.map-overlay-2 {
+    position: relative;
+    font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    background: #fff;
+    top: 400;
+    left: 0;
+    width: 300px;
+    margin: 10px 10px 0 10px;
+    padding: 10px;
+    overflow: visible;
+    border-radius:8px;
+}
+
+.btn-container {
+    position: relative;
+    font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    background: #fff;
+    top: 380;
+    left: 0;
+    width: 300px;
+    margin: 10px 10px 0 10px;
+    padding: 10px;
+    overflow: visible;
+    border-radius:8px;
+}
+
+.legend {
+    position: absolute;
+    display: block;
+    background-color: #fff;
+    border-radius: 3px;
+    bottom: 0;
+    margin-bottom: 30px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /*horizontal shadow, vertical shadow, size of shadow, color*/
+    font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    padding: 10px;
+    right: 10px;
+    z-index: 1;
+}
+
+.prices-legend{
+    position: absolute;
+    display: block;
+    background-color: #fff;
+    border-radius: 3px;
+    bottom: 0;
+    margin-bottom: 30px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /*horizontal shadow, vertical shadow, size of shadow, color*/
+    font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    padding: 10px;
+    right: 140px;
+    z-index: 1;
+}
+
+.legend h4 {
+    margin: 0 0 10px;
+}
+
+.legend-key {
+    display: inline-block;
+    border-radius: 50%; /*curve border to make a circle*/
+    height: 10px; /*size of circle*/
+    width: 10px;
+    margin-right: 5px; /*position of circle*/
 }
