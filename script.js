@@ -10,7 +10,6 @@ const map = new mapboxgl.Map({
 })
 
 
-// STOPPED WORKING 
 //Add search control to map overlay
 //Requires plugin as source in HTML body
 map.addControl(
@@ -27,7 +26,6 @@ map.addControl(new mapboxgl.NavigationControl());
 // Add fullscreen option to the map
 map.addControl(new mapboxgl.FullscreenControl());
 
-const button = document.getElementById('btn');
 
 // fetch map data from website 
 let restaurantsgeojson;
@@ -39,8 +37,32 @@ fetch('https://raw.githubusercontent.com/mahm44/ggr472-group-project/main/data/R
         restaurantsgeojson = response;
     })
 
+// store user input point for buffers on click 
+let pointgeojson = {
+    'type': 'FeatureCollection', 
+    'features': []
+};
+
 
 map.on('load', () => {
+    // for user input buffers 
+    map.addSource('inputgeojson', {
+        type: 'geojson',
+        data: pointgeojson
+    });
+
+    map.addLayer({
+        'id': 'input-pt',
+        'type': 'circle',
+        'source': 'inputgeojson',
+        'paint': {
+            'circle-radius': 5,
+            'circle-color': 'blue'
+        }, 
+        'layout': {'visibility': 'none'}
+    });
+
+    // data map load 
     map.addSource('restaurants', {
         type: 'geojson', 
         data: restaurantsgeojson
@@ -221,78 +243,194 @@ map.on('load', () => {
             ['==', ['get', 'atmosphereRating'], 'Neutral']],
         'layout': {'visibility': 'none'}
     });
+
+
+    // hexgrid 
+    let bboxgeojson;
+
+    // Turf Envelop Geojson
+    let bbox = turf.envelope(restaurantsgeojson);
+
+    bboxgeojson = {
+        'type': 'FeatureCollection',
+        'features': [bbox]
+    };
+
+    // Add Source
+    map.addSource('collisons-bbox', {
+        type: 'geojson', 
+        data: bboxgeojson
+    });
+
+    // Add Layer & Make Colour White
+    map.addLayer({
+        'id': 'bounding-box-fill', 
+        'type': 'line', 
+        'source': 'collisons-bbox', 
+        'paint': {
+            'line-color': '#FFFFFF'
+        },
+        'layout': {'visibility': 'none'}
+    });
+
+    let bboxcoords = [bbox.geometry.coordinates[0][0][0], 
+        bbox.geometry.coordinates[0][0][1], 
+        bbox.geometry.coordinates[0][2][0], 
+        bbox.geometry.coordinates[0][2][1]]
+
+    let hexgeojson = turf.hexGrid(bboxcoords, 0.075, {units: 'kilometers'});
+
+    // Add Hexgrid Source
+    map.addSource('hexgrid', {
+        type: 'geojson', 
+        data: hexgeojson
+    });
+
+
+    // Turf Collect
+    let pricehex = turf.collect(hexgeojson, restaurantsgeojson, '_id', 'values');
+
+    let maxprice = 0;
+
+    pricehex.features.forEach((feature) => {
+
+    feature.properties.priceRating = feature.properties.values.length;
+    if (feature.properties.priceRating > maxprice) {
+        console.log(feature);   
+
+        maxprice = feature.properties.priceRating
+        }
+    });
+
+
+    // Add Source
+    map.addSource('price-hex', {
+        type: 'geojson', 
+        data: pricehex
+    });
+
+    // Add Layer and Adjust Colour Accordingly using an Expression
+    map.addLayer({
+        'id': 'pricehex-layer', 
+        'type': 'fill', 
+        'source': 'price-hex',
+        'paint' : {
+        'fill-color': [
+            // Colours depending on Variable
+            'step', ['get', 'priceRating'], '#ffffff',
+                1, '#fc4e2a', 
+                2, '#e31a1c',
+                3, '#bd0026', 
+                4, '#800026'
+                ],
+            'fill-opacity': [
+                // opacity
+                'step', ['get', 'priceRating'], 0.0,
+                    1, 0.5, 
+                    2, 0.7,
+                    3, 0.7, 
+                    4, 0.5
+                    ],
+        }, 
+        'layout': {'visibility': 'none'}
+    });
 })
 
 // checkbox filters 
 
 const checkboxes = document.querySelectorAll('input[class="form-check-input me-1"]');
 console.log(checkboxes)
-//WHY NO WORK ON FIRST CHECK 
+// HOW TO GET CHECKBOX ID
 
 for (const checkbox of checkboxes) {
-    checkbox.addEventListener('change', function () {
+    checkbox.addEventListener('change', (e) =>  {
         console.log(checkbox)
-        const layerID = this.parentNode.id;
+        const layerID = checkbox.parentNode.id;
         const layer = map.getLayer(layerID);
-        checkbox.addEventListener('change', (e) => {
-            map.setLayoutProperty(layerID, 'visibility', e.target.checked ? 'visible' : 'none')
-        });
+        map.setLayoutProperty(layerID, 'visibility', e.target.checked ? 'visible' : 'none')
     });
 }
 
 const sentCheckboxes = document.querySelectorAll('input[class="form-check-input me-2"]');
 console.log(sentCheckboxes);
 
-for (const checkbox of sentCheckboxes) {
-    checkbox.addEventListener('change', function () {
+for (const checkbox of sentCheckboxes) { 
+    checkbox.addEventListener('change', (e) => {
         console.log(checkbox)
-        const layerID = this.parentNode.id;
+        const layerID = checkbox.parentNode.id;
         const layer = map.getLayer(layerID);
-        checkbox.addEventListener('change', (e) => {
-            map.setLayoutProperty(layerID, 'visibility', e.target.checked ? 'visible' : 'none')
-        });
+        map.setLayoutProperty(layerID, 'visibility', e.target.checked ? 'visible' : 'none')
     });
 }
 
-// button 
 
+// button 
+const button = document.getElementById('btn');
 let btnStatus = null;
 
+const cuisineLayers = ["south-asian", "east-asian", "mid-east", "carribean", "southeast-asian", 
+    "european", "central-american", "religious"]
+
+const sentLayers = ["pos", "neg", "neu"]
+
+const cuisineBoxDisplay = document.getElementById('cuisine-display');
+const sentBoxDisplay = document.getElementById('sent-display');
+
+// change checkbox status/visibility on click 
 button.addEventListener("click", function () {
+    // change to sentiment-price display mode 
     if (btnStatus !== true){
         priceLegend.style.display = 'block';
+        sentLegend.style.display = 'block';
         cuisineLegend.style.display = 'none';
-        for (const checkbox of checkboxes) {
-                const layerID = this.parentNode.id;
-                const layer = map.getLayer(layerID);
+        cuisineBoxDisplay.style.display = 'none';
+        sentBoxDisplay.style.display = 'block';
+        map.setLayoutProperty('pricehex-layer', 'visibility', 'visible')
+        for (const layerID of cuisineLayers) {
+                const layer = map.getLayer(layerID); // what does this line do 
                 map.setLayoutProperty(layerID, 'visibility', 'none')
         }
-        for (const checkbox of sentCheckboxes) {
-            const layerID = this.parentNode.id;
+        for (const layerID of sentLayers) {
             const layer = map.getLayer(layerID);
             map.setLayoutProperty(layerID, 'visibility', 'visible')
+        }
+        // toggle checkboxes 
+        for (const checkbox of checkboxes) {
+            checkbox.checked = false;
+        }
+        for (const checkbox of sentCheckboxes){
+            checkbox.checked = true;
         }
         btnStatus = true;
     }
     else{
+        // change to cuisine display mode 
         priceLegend.style.display = "none";
+        sentLegend.style.display = 'none';
         cuisineLegend.style.display = 'block';
-        for (const checkbox of sentCheckboxes) {
-            const layerID = this.parentNode.id;
+        cuisineBoxDisplay.style.display = 'block';
+        sentBoxDisplay.style.display = 'none';
+        map.setLayoutProperty('pricehex-layer', 'visibility', 'none') // add btn to toggle visibility of hexgrid 
+        for (const layerID of sentLayers) {
             const layer = map.getLayer(layerID);
             map.setLayoutProperty(layerID, 'visibility', 'none')
         }
-        for (const checkbox of checkboxes) {
-            const layerID = this.parentNode.id;
+        for (const layerID of cuisineLayers) {
             const layer = map.getLayer(layerID);
             map.setLayoutProperty(layerID, 'visibility', 'visible')
+        }
+        for (const checkbox of checkboxes) {
+            checkbox.checked = true;
+        }
+        for (const checkbox of sentCheckboxes){
+            checkbox.checked = false;
         }
         btnStatus = false;
     }
     console.log(btnStatus);
 });
 
-// legends
+// legends -- ADD SENTIMENTS LEGEND
 
 const cuisineLegend = document.getElementById('cuisine-legend');
 
@@ -326,10 +464,10 @@ cuiLegendLabels.forEach((label, i) => {
 
 const priceLegend = document.getElementById('expense-legend');
 const priceLegendLabels = [
-    "0", "1", "2", "3", "4"
+    "", "1", "2", "3", "4"
 ];
 const priceLegendColors = [
-    '#800026', '#bd0026', '#e31a1c', '#fc4e2a', '#fd8d3c'
+    '#ffffff', '#fc4e2a', '#e31a1c', '#bd0026', '#800026'
 ];
 
 // create labels for legend item 
@@ -349,6 +487,32 @@ priceLegendLabels.forEach((label, i) => {
     item.appendChild(value); //add the value to the legend row
 
     priceLegend.appendChild(item); //add row to the legend
+});
+
+const sentLegend = document.getElementById('sent-legend');
+const sentLegendLabels = [
+    "Positive", "Negative", "Neutral"
+];
+const sentLegendColors = [
+    "#c0e218", "#c70039", "#0099e5"
+];
+
+sentLegendLabels.forEach((label, i) => {
+    const colour = sentLegendColors[i];
+
+    const item = document.createElement('div'); //each layer gets a 'row' - this isn't in the legend yet, we do this later
+    const key = document.createElement('span'); //add a 'key' to the row. A key will be the colour circle
+
+    key.className = 'legend-key'; //the key will take on the shape and style properties defined in css
+    key.style.backgroundColor = colour; // the background color is retreived from teh layers array
+
+    const value = document.createElement('span'); //add a value variable to the 'row' in the legend
+    value.innerHTML = `${label}`; //give the value variable text based on the label
+
+    item.appendChild(key); //add the key (colour cirlce) to the legend row
+    item.appendChild(value); //add the value to the legend row
+
+    sentLegend.appendChild(item); //add row to the legend
 });
 
 // mouse clicks 
@@ -391,3 +555,64 @@ sentMapLayers.forEach(layer => {
     });
 });
 
+
+// create buffers for a location on the map when clicked 
+// create button - buffer mode -- disable popups 
+// on click, highlight / filter for points in the desired radius (depending on currently displayed layer)
+// should differ by filter mode, after filtering re-enable popups (maybe add in crows distance from current pt?)
+// disabling buffer mode (need indicator) will restore map to intial filter mode display 
+
+
+// buffer btn functionality 
+const bufferBtn = document.getElementById('buffer-btn');
+const bufferStatus = null; 
+
+bufferBtn.addEventListener('click', () => {
+    if (bufferStatus !== true){
+        map.on('click', (e) => {
+            // store clicked point and get coordiantes 
+            const clickedpoint = {
+                'type': 'Feature', 
+                'geometry': {
+                    'type': 'Point', 
+                    'coordinates': [e.lngLat.lng, e.lngLat.lat]
+                }
+            };
+        
+            pointgeojson.features = clickedpoint;
+            map.getSource('inputgeojson').setData(pointgeojson);
+            console.log(pointgeojson);
+        });
+        
+        bufferDisplay = {
+            'type': 'FeatureCollection', 
+            'features': []
+        };
+    
+        let buffer = turf.buffer(pointgeojson.features.Feature, 0.5) // adjust buffer distance here???
+        bufferDispaly.features = buffer;
+    
+        // add source to display buffer 
+        map.addSource('buffgeojson', {
+            "type": "geojson",
+            "data": bufferDisplay  // use buffer geojson variable as data source
+        })
+    
+        // Show buffers on map using styling
+        map.addLayer({
+            "id": "inputpointbuff",
+            "type": "fill",
+            "source": "buffgeojson",
+            "paint": {
+                'fill-color': "blue",
+                'fill-opacity': 0.5,
+                'fill-outline-color': "black"
+            }
+        });
+        bufferStatus = true;
+    }
+    else{
+        map.removeLayer('inputpointbuff');
+        bufferStatus = false;
+    }
+});

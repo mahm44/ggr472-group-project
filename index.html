@@ -29,7 +29,8 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="index.html">Toronto Culinary Tourism Map</a>
             <!--Setting a navbar toggler for smaller screens-->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" 
+            aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div  class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -53,7 +54,7 @@
     <div id='map' class='map-container'></div>
 
     <!-- default filter mode: by cuisine, popups show sentiments -->
-    <div class="map-overlay-1">
+    <div id = 'cuisine-display' class="map-overlay-1">
         <h5> Cuisine Filters </h5>
         <label class="list-group-item" id="south-asian">
             <input class="form-check-input me-1" type="checkbox" value="" checked>
@@ -94,7 +95,11 @@
         <!-- var. text to display current filter mode???? -->
     </div>
 
-    <div class = "map-overlay-2">
+    <div class = "buffer-btn-container">
+        <button type = "button" id = "buffer-btn"> Click Buffer Mode </button>
+    </div>
+
+    <div id = 'sent-display' class = "map-overlay-2">
         <h5> Sentiment Filters </h5>
         <!-- sentiment filters -->
         <label class="list-group-item" id="pos">
@@ -128,6 +133,10 @@
 
         <div id = 'cuisine-legend' class = 'legend'>
             <h4> Cuisines </h4>
+        </div>
+
+        <div id = 'sent-legend' class = 'sentiments-legend' >
+            <h4> Sentiments </h4>
         </div>
 
     <script src="script.js"></script>
