@@ -7,10 +7,10 @@
 }
 
 .btn-container {
-    position: relative;
+    position: fixed;
     font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
     background: #fff;
-    top: 20;
+    top: 60px;
     left: 0;
     width: 300px;
     margin: 10px 10px 0 10px;
@@ -20,10 +20,10 @@
 }
 
 .buffer-btn-container {
-    position: relative;
+    position: fixed;
     font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
     background: #fff;
-    top: 30;
+    top: 115px; 
     left: 0;
     width: 300px;
     margin: 10px 10px 0 10px;
@@ -33,11 +33,11 @@
 }
 
 .map-overlay-1 {
-    position: relative;
+    position: fixed;
     font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
-    display: 'block';
+    display: block;
     background: #fff;
-    top: 50;
+    top: 170px;
     left: 0;
     width: 300px;
     margin: 10px 10px 0 10px;
@@ -47,11 +47,11 @@
 }
 
 .map-overlay-2 {
-    position: relative;
+    position: fixed;
     font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
-    display: 'block';
+    display: none;
     background: #fff;
-    top: 400;
+    top: 390px;
     left: 0;
     width: 300px;
     margin: 10px 10px 0 10px;
@@ -76,7 +76,7 @@
 
 .prices-legend{
     position: absolute;
-    display: block;
+    display: none;
     background-color: #fff;
     border-radius: 3px;
     bottom: 0;
@@ -88,9 +88,23 @@
     z-index: 1;
 }
 
+.buffer-popup-container{
+    position: fixed;
+    font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    display: none;
+    background: #fff;
+    top: 520px;
+    left: 0;
+    width: 300px;
+    margin: 10px 10px 0 10px;
+    padding: 10px;
+    overflow: visible;
+    border-radius:8px;
+}
+
 .sentiments-legend{
     position: absolute;
-    display: block;
+    display: none;
     background-color: #fff;
     border-radius: 3px;
     bottom: 0;

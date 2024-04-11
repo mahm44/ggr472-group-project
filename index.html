@@ -52,6 +52,16 @@
 
     <!-- MAP CONTAINER -->
     <div id='map' class='map-container'></div>
+    
+
+    <div class = "btn-container">
+        <button type = "button" id = "btn"> Change Filter Mode </button>
+        <!-- var. text to display current filter mode???? -->
+    </div>
+
+    <div class = "buffer-btn-container">
+        <button type = "button" id = "buffer-btn"> Toggle Buffer Mode </button>
+    </div>
 
     <!-- default filter mode: by cuisine, popups show sentiments -->
     <div id = 'cuisine-display' class="map-overlay-1">
@@ -90,15 +100,6 @@
         </label>
     </div>
 
-    <div class = "btn-container">
-        <button type = "button" id = "btn"> Change Filter Mode </button>
-        <!-- var. text to display current filter mode???? -->
-    </div>
-
-    <div class = "buffer-btn-container">
-        <button type = "button" id = "buffer-btn"> Click Buffer Mode </button>
-    </div>
-
     <div id = 'sent-display' class = "map-overlay-2">
         <h5> Sentiment Filters </h5>
         <!-- sentiment filters -->
@@ -114,6 +115,12 @@
             <input class="form-check-input me-2" type="checkbox" value="" unchecked>
             Neutral
         </label> 
+    </div>
+
+    <div id = "buffer-popup" class = "buffer-popup-container">
+        <h5> Buffer Mode </h5> 
+        <h6> Showing restaurants within a 0.5 km radius of the mouse click: </h6> <br>
+        <p id = "buffer-text" ></p>
     </div>
 
         <!-- LEGENDS -->

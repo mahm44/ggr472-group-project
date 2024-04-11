@@ -59,7 +59,6 @@ map.on('load', () => {
             'circle-radius': 5,
             'circle-color': 'blue'
         }, 
-        'layout': {'visibility': 'none'}
     });
 
     // data map load 
@@ -296,7 +295,7 @@ map.on('load', () => {
 
     feature.properties.priceRating = feature.properties.values.length;
     if (feature.properties.priceRating > maxprice) {
-        console.log(feature);   
+        // console.log(feature);   
 
         maxprice = feature.properties.priceRating
         }
@@ -344,7 +343,7 @@ console.log(checkboxes)
 
 for (const checkbox of checkboxes) {
     checkbox.addEventListener('change', (e) =>  {
-        console.log(checkbox)
+        // console.log(checkbox)
         const layerID = checkbox.parentNode.id;
         const layer = map.getLayer(layerID);
         map.setLayoutProperty(layerID, 'visibility', e.target.checked ? 'visible' : 'none')
@@ -356,7 +355,7 @@ console.log(sentCheckboxes);
 
 for (const checkbox of sentCheckboxes) { 
     checkbox.addEventListener('change', (e) => {
-        console.log(checkbox)
+        // console.log(checkbox)
         const layerID = checkbox.parentNode.id;
         const layer = map.getLayer(layerID);
         map.setLayoutProperty(layerID, 'visibility', e.target.checked ? 'visible' : 'none')
@@ -531,7 +530,7 @@ mapLayers.forEach(layer => {
     map.on('click', layer, (e) => {
         new mapboxgl.Popup() // upon clicking, declare a popup object 
             .setLngLat(e.lngLat) // method uses coordinates of mouse click to display popup at 
-            .setHTML("<b>Restaurant:</b> " + e.features[0].properties.Name + "<br>" + "<b>Food: </b>" + e.features[0].properties.foodRating + "<br>" + "<b>Service: </b> " + e.features[0].properties.serviceRating + "<br>" + "<b>Atmosphere: </b> " + e.features[0].properties.atmosphereRating + "<br>" + "<b>Price: </b>" + e.features[0].properties.priceRating)
+            .setHTML("<b>Restaurant:</b> " + e.features[0].properties.Name + "<br>" + "<b>Food: </b>" + e.features[0].properties.foodRating + "<br>" + "<b>Service: </b> " + e.features[0].properties.serviceRating + "<br>" + "<b>Atmosphere: </b> " + e.features[0].properties.atmosphereRating + "<br>" + "<b>Price: </b>" + e.features[0].properties.priceRating + "<br>" + "<b>Cuisine: </b>" + e.features[0].properties.Cuisine)
             .addTo(map); //Show popup on map
     });
 });
@@ -550,7 +549,7 @@ sentMapLayers.forEach(layer => {
     map.on('click', layer, (e) => {
         new mapboxgl.Popup() // upon clicking, declare a popup object 
             .setLngLat(e.lngLat) // method uses coordinates of mouse click to display popup at 
-            .setHTML("<b>Restaurant:</b> " + e.features[0].properties.Name + "<br>" + "<b>Cuisine: </b>" + e.features[0].properties.Cuisine)
+            .setHTML("<b>Restaurant:</b> " + e.features[0].properties.Name + "<br>" + "<b>Cuisine: </b>" + e.features[0].properties.Cuisine + "<br>" + "<b>Price: </b>" + e.features[0].properties.priceRating)
             .addTo(map); //Show popup on map
     });
 });
@@ -563,39 +562,45 @@ sentMapLayers.forEach(layer => {
 // disabling buffer mode (need indicator) will restore map to intial filter mode display 
 
 
-// buffer btn functionality 
+// buffer btn functionality -- ADD VISUAL INDICATOR OF TOGGLE STATUS 
 const bufferBtn = document.getElementById('buffer-btn');
-const bufferStatus = null; 
+let bufferStatus = null; 
 
-bufferBtn.addEventListener('click', () => {
-    if (bufferStatus !== true){
-        map.on('click', (e) => {
-            // store clicked point and get coordiantes 
-            const clickedpoint = {
-                'type': 'Feature', 
-                'geometry': {
-                    'type': 'Point', 
-                    'coordinates': [e.lngLat.lng, e.lngLat.lat]
-                }
-            };
-        
-            pointgeojson.features = clickedpoint;
-            map.getSource('inputgeojson').setData(pointgeojson);
-            console.log(pointgeojson);
-        });
+map.on('click', (e) => {
+    // reset layers + source if a point has been clicked already 
+    if (pointgeojson.features.geometry){
+        map.setLayoutProperty('input-pt', 'visibility', 'none');
+        map.removeLayer('inputpointbuff');
+        map.removeSource('buffgeojson');
+    }
+    if (bufferStatus == true){
+        // store clicked point and get coordiantes 
+        const clickedpoint = {
+            'type': 'Feature', 
+            'geometry': {
+                'type': 'Point', 
+                'coordinates': [e.lngLat.lng, e.lngLat.lat]
+            }
+        };
+    
+        pointgeojson.features = clickedpoint;
+        map.getSource('inputgeojson').setData(pointgeojson.features);
+        console.log(pointgeojson);
+        map.setLayoutProperty('input-pt', 'visibility', 'visible');
+
         
         bufferDisplay = {
             'type': 'FeatureCollection', 
             'features': []
         };
-    
-        let buffer = turf.buffer(pointgeojson.features.Feature, 0.5) // adjust buffer distance here???
-        bufferDispaly.features = buffer;
-    
+        
+        let buffer = turf.buffer(pointgeojson.features, 0.5) // adjust buffer distance here???
+        bufferDisplay.features = buffer;
+        
         // add source to display buffer 
         map.addSource('buffgeojson', {
             "type": "geojson",
-            "data": bufferDisplay  // use buffer geojson variable as data source
+            "data": bufferDisplay.features  // use buffer geojson variable as data source
         })
     
         // Show buffers on map using styling
@@ -609,10 +614,35 @@ bufferBtn.addEventListener('click', () => {
                 'fill-outline-color': "black"
             }
         });
-        bufferStatus = true;
+        let displayText = ""
+        // assign buffer text list of restaurants appearing within bugffer and their distances 
+        let ptsWithin = turf.pointsWithinPolygon(restaurantsgeojson, bufferDisplay.features);
+        console.log(ptsWithin);
+
+        ptsWithin.features.forEach((feature) => {
+            // console.log(feature);
+            displayText += feature.properties.Name + "<br>";
+        });
+        let bufferText = displayText;
+        console.log(bufferText);
+        document.getElementById('buffer-text').innerHTML = bufferText;
     }
-    else{
+});
+
+bufferBtn.addEventListener('click', () => {
+    if (bufferStatus !== true){
+        bufferStatus = true;
+        bufferBtn.style.background = '#add8e6';
+        document.getElementById('buffer-popup').style.display = 'block';
+    }
+    else if (bufferStatus == true){
+        // wont work properly unless a point has been chosen first 
+        map.setLayoutProperty('input-pt', 'visibility', 'none');
         map.removeLayer('inputpointbuff');
+        map.removeSource('buffgeojson');
+        pointgeojson.features = []
         bufferStatus = false;
+        bufferBtn.style.background = '#fff';
+        document.getElementById('buffer-popup').style.display = 'none';
     }
 });
