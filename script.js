@@ -11,12 +11,11 @@ const map = new mapboxgl.Map({
 
 
 //Add search control to map overlay
-//Requires plugin as source in HTML body
 map.addControl(
     new MapboxGeocoder({
         accessToken: mapboxgl.accessToken,
         mapboxgl: mapboxgl,
-        countries: "ca" //Try searching for places inside and outside of canada to test the geocoder
+        countries: "ca" 
     })
 );
 
@@ -33,7 +32,7 @@ let restaurantsgeojson;
 fetch('https://raw.githubusercontent.com/mahm44/ggr472-group-project/main/data/Restaurants.geojson')
     .then(response => response.json())
     .then(response => {
-        console.log(response);
+        // console.log(response);
         restaurantsgeojson = response;
     })
 
@@ -61,7 +60,7 @@ map.on('load', () => {
         }, 
     });
 
-    // data map load 
+    // main map load for data 
     map.addSource('restaurants', {
         type: 'geojson', 
         data: restaurantsgeojson
@@ -76,6 +75,7 @@ map.on('load', () => {
     });
 
     // add map layers for checkboxes --> default visible, change once checkboxes are toggled 
+    // layers seperating map data by cuisine 
     map.addLayer({
         'id': 'south-asian',
         'type': 'circle', 
@@ -195,6 +195,8 @@ map.on('load', () => {
     });
 
     //sentiment layers 
+    // seperates map layers into positive, neutral and negative aggregate sentiments
+    // initally not visible, will be visible upon checkbox click 
     map.addLayer({
         'id': 'pos',
         'type': 'circle', 
@@ -210,7 +212,7 @@ map.on('load', () => {
             ['==', ['get', 'atmosphereRating'], 'Positive']],
         'layout': {'visibility': 'none'}
     });
-// too many positive so doing any for these to get more results 
+// too many positive so doing any for negative and neutral to get displayable reuslts 
     map.addLayer({
         'id': 'neg',
         'type': 'circle', 
@@ -244,7 +246,7 @@ map.on('load', () => {
     });
 
 
-    // hexgrid 
+    // hexgrid for price rating 
     let bboxgeojson;
 
     // Turf Envelop Geojson
@@ -255,28 +257,29 @@ map.on('load', () => {
         'features': [bbox]
     };
 
-    // Add Source
+    // add bounding box source 
     map.addSource('collisons-bbox', {
         type: 'geojson', 
         data: bboxgeojson
     });
 
-    // Add Layer & Make Colour White
+    // add layer, keep it not visible 
     map.addLayer({
         'id': 'bounding-box-fill', 
         'type': 'line', 
         'source': 'collisons-bbox', 
         'paint': {
-            'line-color': '#FFFFFF'
+            'line-color': '#000000'
         },
         'layout': {'visibility': 'none'}
     });
-
+    // get coordinates of the verticies of the bounding box 
     let bboxcoords = [bbox.geometry.coordinates[0][0][0], 
         bbox.geometry.coordinates[0][0][1], 
         bbox.geometry.coordinates[0][2][0], 
         bbox.geometry.coordinates[0][2][1]]
 
+    // generate hexgrid of price rating within bounding box 
     let hexgeojson = turf.hexGrid(bboxcoords, 0.075, {units: 'kilometers'});
 
     // Add Hexgrid Source
@@ -308,7 +311,8 @@ map.on('load', () => {
         data: pricehex
     });
 
-    // Add Layer and Adjust Colour Accordingly using an Expression
+    // Add mapped hexgrid layer and Adjust Colour Accordingly using an Expression
+    // inital visibilty off, to be toggled on w/ filter change 
     map.addLayer({
         'id': 'pricehex-layer', 
         'type': 'fill', 
@@ -316,6 +320,7 @@ map.on('load', () => {
         'paint' : {
         'fill-color': [
             // Colours depending on Variable
+            // values of 0 will be hidden (by setting opacity to 0) as those values are irrelevant 
             'step', ['get', 'priceRating'], '#ffffff',
                 1, '#fc4e2a', 
                 2, '#e31a1c',
@@ -336,11 +341,12 @@ map.on('load', () => {
 })
 
 // checkbox filters 
-
+//  cuisine checkboxes -- gather from html instance
 const checkboxes = document.querySelectorAll('input[class="form-check-input me-1"]');
-console.log(checkboxes)
-// HOW TO GET CHECKBOX ID
+// console.log(checkboxes)
 
+// generate event listener for each checkbox
+// on each change of a checkbox, toggle the cuisine layers on or off based on check status 
 for (const checkbox of checkboxes) {
     checkbox.addEventListener('change', (e) =>  {
         // console.log(checkbox)
@@ -350,9 +356,11 @@ for (const checkbox of checkboxes) {
     });
 }
 
+// sentiment checkboxes 
 const sentCheckboxes = document.querySelectorAll('input[class="form-check-input me-2"]');
-console.log(sentCheckboxes);
+// console.log(sentCheckboxes);
 
+// toggle sentiment layers on or off upon checkbox change 
 for (const checkbox of sentCheckboxes) { 
     checkbox.addEventListener('change', (e) => {
         // console.log(checkbox)
@@ -363,15 +371,17 @@ for (const checkbox of sentCheckboxes) {
 }
 
 
-// button 
+// change filter button 
 const button = document.getElementById('btn');
-let btnStatus = null;
+let btnStatus = null; // toggled to ture/false to keep track of filter mode (add display text for this???)
 
+// list names of cuisine and sentiment layers
 const cuisineLayers = ["south-asian", "east-asian", "mid-east", "carribean", "southeast-asian", 
     "european", "central-american", "religious"]
 
 const sentLayers = ["pos", "neg", "neu"]
 
+// to control display of checkbox interfaces for each category of layers 
 const cuisineBoxDisplay = document.getElementById('cuisine-display');
 const sentBoxDisplay = document.getElementById('sent-display');
 
@@ -379,24 +389,30 @@ const sentBoxDisplay = document.getElementById('sent-display');
 button.addEventListener("click", function () {
     // change to sentiment-price display mode 
     if (btnStatus !== true){
+        // make price legend, sentiment legend and sentiment layer checkboxes appear 
+        // hide cusisines legend and checkboxes 
         priceLegend.style.display = 'block';
         sentLegend.style.display = 'block';
         cuisineLegend.style.display = 'none';
         cuisineBoxDisplay.style.display = 'none';
         sentBoxDisplay.style.display = 'block';
+        // make price rating hexgrid appear 
         map.setLayoutProperty('pricehex-layer', 'visibility', 'visible')
+        // turn off cuisine layers 
         for (const layerID of cuisineLayers) {
-                const layer = map.getLayer(layerID); // what does this line do 
+                const layer = map.getLayer(layerID); // this line may be useless 
                 map.setLayoutProperty(layerID, 'visibility', 'none')
         }
+        // turn on sentiment layers 
         for (const layerID of sentLayers) {
             const layer = map.getLayer(layerID);
             map.setLayoutProperty(layerID, 'visibility', 'visible')
         }
-        // toggle checkboxes 
+        // toggle checkboxes checked/unchecked status 
         for (const checkbox of checkboxes) {
             checkbox.checked = false;
         }
+        // all sentiment checkboxes will refresh to checked when filter button is clicked 
         for (const checkbox of sentCheckboxes){
             checkbox.checked = true;
         }
@@ -404,33 +420,40 @@ button.addEventListener("click", function () {
     }
     else{
         // change to cuisine display mode 
+        // turn off price, sentiment legends and sentiment layers, and hexgrid layer 
+        // turn on cuisine legend and cuisine layers 
         priceLegend.style.display = "none";
         sentLegend.style.display = 'none';
         cuisineLegend.style.display = 'block';
+        // show cuisine checkboxes, turn off sentiment checkboxes 
         cuisineBoxDisplay.style.display = 'block';
         sentBoxDisplay.style.display = 'none';
-        map.setLayoutProperty('pricehex-layer', 'visibility', 'none') // add btn to toggle visibility of hexgrid 
+        map.setLayoutProperty('pricehex-layer', 'visibility', 'none')  
+        // turn off sentiment layers 
         for (const layerID of sentLayers) {
             const layer = map.getLayer(layerID);
             map.setLayoutProperty(layerID, 'visibility', 'none')
         }
+        // turn on cuisine layers 
         for (const layerID of cuisineLayers) {
             const layer = map.getLayer(layerID);
             map.setLayoutProperty(layerID, 'visibility', 'visible')
         }
+        // check all cuisine checkboxes 
         for (const checkbox of checkboxes) {
             checkbox.checked = true;
         }
+        // uncheck all sentiment checkboxes 
         for (const checkbox of sentCheckboxes){
             checkbox.checked = false;
         }
         btnStatus = false;
     }
-    console.log(btnStatus);
+    // console.log(btnStatus);
 });
 
-// legends -- ADD SENTIMENTS LEGEND
-
+// legends
+// cuisines legend 
 const cuisineLegend = document.getElementById('cuisine-legend');
 
 const cuiLegendLabels = [
@@ -461,6 +484,7 @@ cuiLegendLabels.forEach((label, i) => {
     cuisineLegend.appendChild(item); //add row to the legend
 });
 
+// prices legend (for hexgrid)
 const priceLegend = document.getElementById('expense-legend');
 const priceLegendLabels = [
     "", "1", "2", "3", "4"
@@ -488,6 +512,7 @@ priceLegendLabels.forEach((label, i) => {
     priceLegend.appendChild(item); //add row to the legend
 });
 
+// sentiments legend 
 const sentLegend = document.getElementById('sent-legend');
 const sentLegendLabels = [
     "Positive", "Negative", "Neutral"
@@ -516,6 +541,7 @@ sentLegendLabels.forEach((label, i) => {
 
 // mouse clicks 
 
+// mouse clicks when in cuisine mode 
 const mapLayers = ['south-asian', 'east-asian', 'mid-east', 'caribbean', 'southeast-asian', 
 'european', 'central-american', 'religious'];
 
@@ -530,6 +556,8 @@ mapLayers.forEach(layer => {
     map.on('click', layer, (e) => {
         new mapboxgl.Popup() // upon clicking, declare a popup object 
             .setLngLat(e.lngLat) // method uses coordinates of mouse click to display popup at 
+            // show restaurant name, food, service and atmosphere rating, price rating and cuisine in popup 
+            // once mouse clicks a point 
             .setHTML("<b>Restaurant:</b> " + e.features[0].properties.Name + "<br>" + "<b>Food: </b>" + e.features[0].properties.foodRating + "<br>" + "<b>Service: </b> " + e.features[0].properties.serviceRating + "<br>" + "<b>Atmosphere: </b> " + e.features[0].properties.atmosphereRating + "<br>" + "<b>Price: </b>" + e.features[0].properties.priceRating + "<br>" + "<b>Cuisine: </b>" + e.features[0].properties.Cuisine)
             .addTo(map); //Show popup on map
     });
@@ -549,30 +577,34 @@ sentMapLayers.forEach(layer => {
     map.on('click', layer, (e) => {
         new mapboxgl.Popup() // upon clicking, declare a popup object 
             .setLngLat(e.lngLat) // method uses coordinates of mouse click to display popup at 
+            // display restaurant name and cuisine and price rating on click 
             .setHTML("<b>Restaurant:</b> " + e.features[0].properties.Name + "<br>" + "<b>Cuisine: </b>" + e.features[0].properties.Cuisine + "<br>" + "<b>Price: </b>" + e.features[0].properties.priceRating)
             .addTo(map); //Show popup on map
     });
 });
 
 
-// create buffers for a location on the map when clicked 
-// create button - buffer mode -- disable popups 
-// on click, highlight / filter for points in the desired radius (depending on currently displayed layer)
-// should differ by filter mode, after filtering re-enable popups (maybe add in crows distance from current pt?)
-// disabling buffer mode (need indicator) will restore map to intial filter mode display 
 
-
-// buffer btn functionality -- ADD VISUAL INDICATOR OF TOGGLE STATUS 
+// buffer btn functionality -- enable buffer mode so mouse click creates buffers 
 const bufferBtn = document.getElementById('buffer-btn');
 let bufferStatus = null; 
 
+// create buffers for a location on the map when clicked 
+// create button - buffer mode -- disable popups 
+// on click, highlight / filter for points in the desired radius (depending on currently displayed layer)
+// should differ by filter mode, after filtering re-enable popups 
+// disabling buffer mode  will restore map to intial filter mode display 
+// buffer mode can't be disabeld unless some point is clicked / buffer is made first however (not sure how to fix currently)
+
+// once point is clicked, if button status is enabled, generate buffers around selected points 
 map.on('click', (e) => {
-    // reset layers + source if a point has been clicked already 
+    // reset layers + source if a point has been clicked already (exists in buffer point features json)
     if (pointgeojson.features.geometry){
         map.setLayoutProperty('input-pt', 'visibility', 'none');
         map.removeLayer('inputpointbuff');
         map.removeSource('buffgeojson');
     }
+    // if buffer mode in enabled 
     if (bufferStatus == true){
         // store clicked point and get coordiantes 
         const clickedpoint = {
@@ -582,19 +614,19 @@ map.on('click', (e) => {
                 'coordinates': [e.lngLat.lng, e.lngLat.lat]
             }
         };
-    
+        // store point in layer and display 
         pointgeojson.features = clickedpoint;
         map.getSource('inputgeojson').setData(pointgeojson.features);
-        console.log(pointgeojson);
+        // console.log(pointgeojson);
         map.setLayoutProperty('input-pt', 'visibility', 'visible');
 
-        
+        // for buffer aorund selected point 
         bufferDisplay = {
             'type': 'FeatureCollection', 
             'features': []
         };
         
-        let buffer = turf.buffer(pointgeojson.features, 0.5) // adjust buffer distance here???
+        let buffer = turf.buffer(pointgeojson.features, 0.5) // 0.5 km buffer distance (km is default)
         bufferDisplay.features = buffer;
         
         // add source to display buffer 
@@ -614,33 +646,45 @@ map.on('click', (e) => {
                 'fill-outline-color': "black"
             }
         });
+        //  to store names of restaurant points falling within buffer 
         let displayText = ""
         // assign buffer text list of restaurants appearing within bugffer and their distances 
+        // find overlay of buffer polygon and point features 
         let ptsWithin = turf.pointsWithinPolygon(restaurantsgeojson, bufferDisplay.features);
-        console.log(ptsWithin);
+        // console.log(ptsWithin);
 
+        // write name of each restaurant point 
         ptsWithin.features.forEach((feature) => {
             // console.log(feature);
             displayText += feature.properties.Name + "<br>";
         });
+        // display text in html paragraph
         let bufferText = displayText;
-        console.log(bufferText);
+        // console.log(bufferText);
         document.getElementById('buffer-text').innerHTML = bufferText;
     }
 });
 
+// toggle buffer mode on and off 
 bufferBtn.addEventListener('click', () => {
+    // when buffer mode is enabled, turn of buffer button status and display popup that will show 
+    // restaurants lying within the buffer 
     if (bufferStatus !== true){
         bufferStatus = true;
+        // color the button when clicked to indicate status 
         bufferBtn.style.background = '#add8e6';
         document.getElementById('buffer-popup').style.display = 'block';
+        document.getElementById('buffer-text').innerHTML = "";
     }
+    // turn off buffer mode 
     else if (bufferStatus == true){
         // wont work properly unless a point has been chosen first 
+        // turn off buffer layers and delete source to refresh 
         map.setLayoutProperty('input-pt', 'visibility', 'none');
         map.removeLayer('inputpointbuff');
         map.removeSource('buffgeojson');
         pointgeojson.features = []
+        // uncolor buffer button and hide restaurant names display 
         bufferStatus = false;
         bufferBtn.style.background = '#fff';
         document.getElementById('buffer-popup').style.display = 'none';

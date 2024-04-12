@@ -53,7 +53,7 @@
     <!-- MAP CONTAINER -->
     <div id='map' class='map-container'></div>
     
-
+    <!-- filter buttom amd buffer button-->
     <div class = "btn-container">
         <button type = "button" id = "btn"> Change Filter Mode </button>
         <!-- var. text to display current filter mode???? -->
@@ -99,10 +99,10 @@
             Religious
         </label>
     </div>
-
+    
+    <!-- sentiment filters -->
     <div id = 'sent-display' class = "map-overlay-2">
         <h5> Sentiment Filters </h5>
-        <!-- sentiment filters -->
         <label class="list-group-item" id="pos">
             <input class="form-check-input me-2" type="checkbox" value="" unchecked>
             Positive
@@ -117,6 +117,7 @@
         </label> 
     </div>
 
+    <!-- pop up text for buffer mode (variable text that will change on click)-->
     <div id = "buffer-popup" class = "buffer-popup-container">
         <h5> Buffer Mode </h5> 
         <h6> Showing restaurants within a 0.5 km radius of the mouse click: </h6> <br>
@@ -125,17 +126,9 @@
 
         <!-- LEGENDS -->
 
-        <!-- expense legend will be toggled on in sentiment filter mode  
-            need to fix so expenseiveness doesn't initally load -->
+        <!-- expense and sentiment legend will be toggled on in sentiment filter mode -->
         <div id='expense-legend' class='prices-legend'>
             <h4>Expensiveness</h4>
-            <!--
-            <div><span style='background-color: #800026'></span>0</div>
-            <div><span style='background-color: #bd0026'></span>1</div>
-            <div><span style='background-color: #e31a1c'></span>2</div>
-            <div><span style='background-color: #fc4e2a'></span>3</div>
-            <div><span style='background-color: #fd8d3c'></span>4</div>
-            -->
         </div>
 
         <div id = 'cuisine-legend' class = 'legend'>
